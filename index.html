@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Avanza Trading Helper - Stop Loss & Take Profit</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #0a2463 0%, #3e92cc 100%);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            color: #00d4aa;
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .tab {
+            flex: 1;
+            min-width: 150px;
+            padding: 15px 25px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            cursor: pointer;
+            text-align: center;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        .tab:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+        
+        .tab.active {
+            background: #00d4aa;
+            border-color: #00d4aa;
+            color: #0a2463;
+        }
+        
+        .content-section {
+            display: none;
+        }
+        
+        .content-section.active {
+            display: block;
+        }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            margin-bottom: 30px;
+        }
+        
+        .card h2 {
+            color: #00d4aa;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #00d4aa;
+        }
+        
+        .input-group input,
+        .input-group select {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        
+        .input-group input:focus,
+        .input-group select:focus {
+            outline: none;
+            border-color: #00d4aa;
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        .input-group select option {
+            background: #0a2463;
+            color: white;
+        }
+        
+        .button {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #00d4aa 0%, #00b894 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 20px;
+        }
+        
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 212, 170, 0.4);
+        }
+        
+        .button:active {
+            transform: translateY(0);
+        }
+        
+        .results {
+            display: none;
+            margin-top: 30px;
+        }
+        
+        .results.show {
+            display: block;
+        }
+        
+        .result-card {
+            background: rgba(0, 212, 170, 0.1);
+            border: 2px solid #00d4aa;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+        
+        .result-card h3 {
+            color: #00d4aa;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+        
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .result-row:last-child {
+            border-bottom: none;
+        }
+        
+        .result-label {
+            font-weight: bold;
+            color: #00d4aa;
+        }
+        
+        .result-value {
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+        
+        .result-value.positive {
+            color: #4caf50;
+        }
+        
+        .result-value.negative {
+            color: #f44336;
+        }
+        
+        .step-guide {
+            margin-top: 30px;
+        }
+        
+        .step {
+            background: rgba(255, 255, 255, 0.05);
+            border-left: 4px solid #00d4aa;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+        
+        .step-number {
+            display: inline-block;
+            background: #e91e63;
+            color: white;
+            width: 40px;
+            height: 40px;
+            line-height: 40px;
+            text-align: center;
+            border-radius: 50%;
+            font-weight: bold;
+            margin-right: 15px;
+            font-size: 20px;
+        }
+        
+        .step h4 {
+            display: inline-block;
+            color: #00d4aa;
+            font-size: 1.3em;
+            margin-bottom: 10px;
+        }
+        
+        .step-content {
+            margin-top: 15px;
+            padding-left: 55px;
+        }
+        
+        .highlight-box {
+            background: rgba(0, 212, 170, 0.15);
+            border: 2px dashed #00d4aa;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-size: 1.1em;
+        }
+        
+        .warning-box {
+            background: rgba(255, 152, 0, 0.1);
+            border-left: 4px solid #ff9800;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        
+        .success-box {
+            background: rgba(76, 175, 80, 0.1);
+            border-left: 4px solid #4caf50;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        
+        .info-box {
+            background: rgba(33, 150, 243, 0.1);
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        
+        .risk-level {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .risk-option {
+            flex: 1;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        
+        .risk-option:hover {
+            transform: translateY(-2px);
+        }
+        
+        .risk-option.active {
+            border-color: #00d4aa;
+            background: rgba(0, 212, 170, 0.2);
+        }
+        
+        .risk-option.low.active {
+            border-color: #4caf50;
+            background: rgba(76, 175, 80, 0.2);
+        }
+        
+        .risk-option.high.active {
+            border-color: #f44336;
+            background: rgba(244, 67, 54, 0.2);
+        }
+        
+        .visual-guide {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+        }
+        
+        .button-demo {
+            display: inline-block;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-weight: bold;
+            margin: 10px 5px;
+            font-size: 16px;
+        }
+        
+        .button-sell {
+            background: #e91e63;
+            color: white;
+        }
+        
+        .dots {
+            color: #00d4aa;
+            font-size: 30px;
+            font-weight: bold;
+        }
+        
+        .leverage-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .leverage-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .leverage-card h4 {
+            color: #00d4aa;
+            margin-bottom: 10px;
+        }
+        
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            .tabs {
+                flex-direction: column;
+            }
+            
+            .tab {
+                min-width: 100%;
+            }
+            
+            .risk-level {
+                flex-direction: column;
+            }
+        }
+        
+        .emoji {
+            font-size: 24px;
+            margin-right: 10px;
+        }
+        
+        .copy-button {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-left: 10px;
+            transition: all 0.3s;
+        }
+        
+        .copy-button:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .calculation-box {
+            background: rgba(33, 150, 243, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 1.1em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 Avanza Trading Helper</h1>
+            <p>Stop Loss & Take Profit Kalkylator + Steg-för-steg Guide</p>
+        </div>
+        
+        <div class="tabs">
+            <div class="tab active" onclick="showTab('calculator')">
+                📊 Kalkylator
+            </div>
+            <div class="tab" onclick="showTab('stoploss-guide')">
+                🛑 Stop Loss Guide
+            </div>
+            <div class="tab" onclick="showTab('takeprofit-guide')">
+                🎯 Take Profit Guide
+            </div>
+            <div class="tab" onclick="showTab('tips')">
+                💡 Tips & Råd
+            </div>
+        </div>
+        
+        <!-- CALCULATOR TAB -->
+        <div id="calculator" class="content-section active">
+            <div class="card">
+                <h2>💰 Beräkna Stop Loss & Take Profit</h2>
+                
+                <div class="input-group">
+                    <label>Certifikatets namn:</label>
+                    <input type="text" id="certName" placeholder="T.ex. Bull ASTS X2 SG2">
+                </div>
+                
+                <div class="input-group">
+                    <label>Inköpspris (kr/st):</label>
+                    <input type="number" id="buyPrice" placeholder="T.ex. 18.87" step="0.01">
+                </div>
+                
+                <div class="input-group">
+                    <label>Antal certifikat:</label>
+                    <input type="number" id="quantity" placeholder="T.ex. 15">
+                </div>
+                
+                <div class="input-group">
+                    <label>Hävstång:</label>
+                    <select id="leverage">
+                        <option value="2">X2 (Säkrare)</option>
+                        <option value="3">X3</option>
+                        <option value="5">X5</option>
+                        <option value="10">X10 (Mycket riskabelt)</option>
+                        <option value="15">X15 (Extremt riskabelt)</option>
+                    </select>
+                </div>
+                
+                <div class="input-group">
+                    <label>Risk-nivå:</label>
+                    <div class="risk-level">
+                        <div class="risk-option low" onclick="selectRisk('low')">
+                            <div>🟢</div>
+                            <div><strong>Försiktig</strong></div>
+                            <div style="font-size: 12px;">-10% / +20%</div>
+                        </div>
+                        <div class="risk-option active" onclick="selectRisk('balanced')">
+                            <div>🟡</div>
+                            <div><strong>Balanserad</strong></div>
+                            <div style="font-size: 12px;">-15% / +30%</div>
+                        </div>
+                        <div class="risk-option high" onclick="selectRisk('aggressive')">
+                            <div>🔴</div>
+                            <div><strong>Aggressiv</strong></div>
+                            <div style="font-size: 12px;">-20% / +40%</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="button" onclick="calculate()">
+                    🧮 Beräkna Stop Loss & Take Profit
+                </button>
+            </div>
+            
+            <div class="results" id="results">
+                <div class="result-card">
+                    <h3>📊 Dina resultat:</h3>
+                    <div class="result-row">
+                        <span class="result-label">Total investering:</span>
+                        <span class="result-value" id="totalInvestment">0 kr</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">Risk-nivå:</span>
+                        <span class="result-value" id="riskLevel">-</span>
+                    </div>
+                </div>
+                
+                <div class="result-card" style="border-color: #f44336; background: rgba(244, 67, 54, 0.1);">
+                    <h3>🛑 STOP LOSS (Skydd)</h3>
+                    <div class="result-row">
+                        <span class="result-label">Trigger-pris:</span>
+                        <span class="result-value negative" id="slTrigger">0 kr</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">Limit-pris:</span>
+                        <span class="result-value negative" id="slLimit">0 kr</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">Max förlust:</span>
+                        <span class="result-value negative" id="maxLoss">0 kr</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">Procent förlust:</span>
+                        <span class="result-value negative" id="lossPercent">0%</span>
+                    </div>
+                </div>
+                
+                <div class="result-card" style="border-color: #4caf50; background: rgba(76, 175, 80, 0.1);">
+                    <h3>🎯 TAKE PROFIT (Vinst)</h3>
+                    <div class="result-row">
+                        <span class="result-label">Limit-pris:</span>
+                        <span class="result-value positive" id="tpLimit">0 kr</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">Möjlig vinst:</span>
+                        <span class="result-value positive" id="maxProfit">0 kr</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">Procent vinst:</span>
+                        <span class="result-value positive" id="profitPercent">0%</span>
+                    </div>
+                </div>
+                
+                <div class="result-card" style="border-color: #2196F3; background: rgba(33, 150, 243, 0.1);">
+                    <h3>⚖️ Risk/Reward Ratio</h3>
+                    <div class="result-row">
+                        <span class="result-label">Ratio:</span>
+                        <span class="result-value" id="ratio">1:0</span>
+                    </div>
+                    <div id="ratioAdvice" style="margin-top: 10px; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 6px;">
+                    </div>
+                </div>
+                
+                <div class="step-guide">
+                    <h3 style="color: #00d4aa; margin-bottom: 20px;">✅ Nästa steg:</h3>
+                    <div class="info-box">
+                        <p><strong>👉 Gå nu till flikarna ovan:</strong></p>
+                        <ul style="margin-top: 10px; padding-left: 20px;">
+                            <li><strong>🛑 Stop Loss Guide</strong> - För att lägga Stop Loss</li>
+                            <li><strong>🎯 Take Profit Guide</strong> - För att lägga Take Profit</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- STOP LOSS GUIDE TAB -->
+        <div id="stoploss-guide" class="content-section">
+            <div class="card">
+                <h2>🛑 Stop Loss - Steg för steg</h2>
+                <p style="margin-bottom: 20px;">Följ dessa steg EXAKT som de visas nedan:</p>
+                
+                <div class="step">
+                    <span class="step-number">1</span>
+                    <h4>Tryck på "Sälj"-knappen</h4>
+                    <div class="step-content">
+                        <p>På din innehavssida där du ser ditt certifikat:</p>
+                        <div class="visual-guide">
+                            <div class="button-demo button-sell">Sälj</div>
+                            <p style="margin-top: 10px; color: #00d4aa;">👆 Tryck på denna röda knapp</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <span class="step-number">2</span>
+                    <h4>Hitta de tre punkterna (•••)</h4>
+                    <div class="step-content">
+                        <p>Scrolla NER i säljvyn tills du ser:</p>
+                        <div class="visual-guide" style="text-align: center;">
+                            <div class="dots">• • •</div>
+                            <p style="color: #00d4aa; margin-top: 10px;">Avancerad orderläggning</p>
+                        </div>
+                        <div class="warning-box">
+                            <strong>⚠️ VIKTIGT:</strong> Du måste scrolla ner för att hitta dessa tre punkter!
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <span class="step-number">3</span>
+                    <h4>Välj "Stop Loss"</h4>
+                    <div class="step-content">
+                        <p>När du trycker på tre punkterna öppnas en meny.</p>
+                        <div class="highlight-box">
+                            📊 Välj alternativet: <strong>Stop Loss</strong>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <span class="step-number">4</span>
+                    <h4>Fyll i värdena</h4>
+                    <div class="step-content">
+                        <div class="info-box">
+                            <p><strong>Se till att det står:</strong></p>
+                            <p style="color: #00d4aa; margin-top: 10px;">"Lika med eller Lägre" (till vänster om Trigger-fältet)</p>
+                        </div>
+                        
+                        <div style="margin: 20px 0;">
+                            <h4 style="color: #00d4aa; margin-bottom: 10px;">Fält 1: TRIGGER</h4>
+                            <div class="highlight-box">
+                                <p><strong>Använd värdet från kalkylatorn:</strong></p>
+                                <p style="font-size: 1.3em; color: #f44336; margin-top: 5px;" id="slGuideT trigger">16,04 kr</p>
+                            </div>
+                            <div class="calculation-box">
+                                Detta är priset när säljordern aktiveras
+                            </div>
+                        </div>
+                        
+                        <div style="margin: 20px 0;">
+                            <h4 style="color: #00d4aa; margin-bottom: 10px;">Fält 2: ANTAL</h4>
+                            <div class="highlight-box">
+                                <p><strong>Skriv in antal certifikat du äger:</strong></p>
+                                <p style="font-size: 1.3em; color: #00d4aa; margin-top: 5px;" id="slGuideQuantity">15 st</p>
+                            </div>
+                        </div>
+                        
+                        <div style="margin: 20px 0;">
+                            <h4 style="color: #00d4aa; margin-bottom: 10px;">Fält 3: KURS (Limit)</h4>
+                            <div class="highlight-box">
+                                <p><strong>Använd värdet från kalkylatorn:</strong></p>
+                                <p style="font-size: 1.3em; color: #f44336; margin-top: 5px;" id="slGuideLimit">15,80 kr</p>
+                            </div>
+                            <div class="calculation-box">
+                                Detta är priset din säljorder läggs på
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <span class="step-number">5</span>
+                    <h4>Välj giltighet</h4>
+                    <div class="step-content">
+                        <div class="highlight-box">
+                            ⏰ Välj: <strong>"Gäller tills vidare"</strong>
+                        </div>
+                        <p style="margin-top: 10px;">Detta gör att ordern är aktiv tills den triggas eller du tar bort den.</p>
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <span class="step-number">6</span>
+                    <h4>Granska och bekräfta</h4>
+                    <div class="step-content">
+                        <p>Tryck på:</p>
+                        <div class="button-demo button-sell" style="margin: 15px 0;">Granska sälj</div>
+                        <p>Kontrollera att allt stämmer, sedan:</p>
+                        <div class="button-demo button-sell" style="margin: 15px 0;">Lägg order</div>
+                        <div class="success-box" style="margin-top: 20px;">
+                            <h4>✅ KLART!</h4>
+                            <p>Din Stop Loss är nu aktiv och skyddar dig mot stora förluster.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- TAKE PROFIT GUIDE TAB -->
+        <div id="takeprofit-guide" class="content-section">
+            <div class="card">
+                <h2>🎯 Take Profit - Steg för steg</h2>
+                <p style="margin-bottom: 20px;">Nu ska du lägga Take Profit (ANNORLUNDA än Stop Loss!):</p>
+                
+                <div class="warning-box">
+                    <h4>⚠️ VIKTIGT SKILLNAD:</h4>
+                    <p>För Take Profit använder du <strong>VANLIG</strong> orderläggning.</p>
+                    <p style="margin-top: 5px;"><strong>TRYCK INTE</strong> på tre punkterna (•••) denna gång!</p>
+                </div>
+                
+                <div class="step">
+                    <span class="step-number">1</span>
+                    <h4>Gå tillbaka till innehavssidan</h4>
+                    <div class="step-content">
+                        <p>Om du fortfarande är i Stop Loss-vyn:</p>
+                        <div class="highlight-box">
+                            Tryck på <strong>X</strong> (uppe till höger) för att stänga
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <span class="step-number">2</span>
+                    <h4>Tryck på "Sälj" igen</h4>
+                    <div class="step-content">
+                        <p>Från din innehavssida:</p>
+                        <div class="visual-guide">
+                            <div class="button-demo button-sell">Sälj</div>
+                            <p style="margin-top: 10px; color: #00d4aa;">👆 Tryck på den röda knappen igen</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <span class="step-number">3</span>
+                    <h4>Använd ENKEL orderläggning</h4>
+                    <div class="step-content">
+                        <div class="warning-box">
+                            <strong>⚠️ KRITISKT:</strong>
+                            <ul style="margin-top: 10px; padding-left: 20px;">
+                                <li>Tryck INTE på tre punkterna (•••)</li>
+                                <li>Använd den vanliga orderläggningen som visas direkt</li>
+                                <li>Du ska se: Antal och Kurs (och inget "Trigger"-fält)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <span class="step-number">4</span>
+                    <h4>Fyll i värdena</h4>
+                    <div class="step-content">
+                        <div style="margin: 20px 0;">
+                            <h4 style="color: #00d4aa; margin-bottom: 10px;">Fält 1: ANTAL</h4>
+                            <div class="highlight-box">
+                                <p><strong>Skriv in antal certifikat:</strong></p>
+                                <p style="font-size: 1.3em; color: #4caf50; margin-top: 5px;" id="tpGuideQuantity">15 st</p>
+                            </div>
+                        </div>
+                        
+                        <div style="margin: 20px 0;">
+                            <h4 style="color: #00d4aa; margin-bottom: 10px;">Fält 2: KURS (Limit)</h4>
+                            <div class="highlight-box">
+                                <p><strong>Använd värdet från kalkylatorn:</strong></p>
+                                <p style="font-size: 1.3em; color: #4caf50; margin-top: 5px;" id="tpGuideLimit">24,53 kr</p>
+                            </div>
+                            <div class="calculation-box">
+                                Detta är priset där du säljer och tar vinst
+                            </div>
+                        </div>
+                        
+                        <div style="margin: 20px 0;">
+                            <h4 style="color: #00d4aa; margin-bottom: 10px;">Ordertyp</h4>
+                            <div class="info-box">
+                                <p>Ska automatiskt stå: <strong>Limit</strong></p>
+                                <p style="font-size: 14px; margin-top: 5px;">(Om inte, välj Limit i dropdown)</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <span class="step-number">5</span>
+                    <h4>Välj giltighet</h4>
+                    <div class="step-content">
+                        <div class="highlight-box">
+                            ⏰ Scrolla ner och välj: <strong>"Gäller tills vidare"</strong>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="step">
+                    <span class="step-number">6</span>
+                    <h4>Lägg order</h4>
+                    <div class="step-content">
+                        <p>Kontrollera att allt stämmer och tryck:</p>
+                        <div class="button-demo button-sell" style="margin: 15px 0;">Lägg order</div>
+                        <div class="success-box" style="margin-top: 20px;">
+                            <h4>🎉 PERFEKT!</h4>
+                            <p>Nu har du både Stop Loss OCH Take Profit aktiva!</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card" style="margin-top: 30px; background: rgba(76, 175, 80, 0.1);">
+                    <h3 style="color: #4caf50;">✅ Du är nu helt skyddad!</h3>
+                    <div class="result-row">
+                        <span>🛑 Stop Loss skyddar dig mot förlust</span>
+                    </div>
+                    <div class="result-row">
+                        <span>🎯 Take Profit säkrar din vinst</span>
+                    </div>
+                    <div style="margin-top: 20px; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                        <p><strong>⚠️ Kom ihåg:</strong></p>
+                        <ul style="margin-top: 10px; padding-left: 20px;">
+                            <li>När EN order går igenom → radera den ANDRA manuellt</li>
+                            <li>Följ positionen dagligen kl 15:30 (när USA öppnar)</li>
+                            <li>Flytta INTE Stop Loss nedåt (disciplin!)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- TIPS TAB -->
+        <div id="tips" class="content-section">
+            <div class="card">
+                <h2>💡 Tips & Råd för säkrare trading</h2>
+                
+                <div class="leverage-info">
+                    <div class="leverage-card" style="border-color: #4caf50;">
+                        <h4>🟢 X2 Hävstång</h4>
+                        <p><strong>Rekommenderas!</strong></p>
+                        <ul style="margin-top: 10px; font-size: 14px;">
+                            <li>Lägst risk</li>
+                            <li>Kan hålla över natten</li>
+                            <li>Långsammare urholkning</li>
+                            <li>Perfekt för nybörjare</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="leverage-card" style="border-color: #ff9800;">
+                        <h4>🟡 X5 Hävstång</h4>
+                        <p><strong>Måttlig risk</strong></p>
+                        <ul style="margin-top: 10px; font-size: 14px;">
+                            <li>Högre risk</li>
+                            <li>Intradag handel</li>
+                            <li>Snabbare urholkning</li>
+                            <li>Kräver erfarenhet</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="leverage-card" style="border-color: #f44336;">
+                        <h4>🔴 X10+ Hävstång</h4>
+                        <p><strong>Mycket riskabelt!</strong></p>
+                        <ul style="margin-top: 10px; font-size: 14px;">
+                            <li>Extremt hög risk</li>
+                            <li>Endast intradag</li>
+                            <li>Kan förlora allt snabbt</li>
+                            <li>Endast för experter</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 30px;">
+                    <h3 style="color: #00d4aa; margin-bottom: 20px;">📚 Viktiga regler:</h3>
+                    
+                    <div class="success-box">
+                        <h4>✅ GÖR:</h4>
+                        <ul style="margin-top: 10px; padding-left: 20px;">
+                            <li>Sätt ALLTID Stop Loss direkt efter köp</li>
+                            <li>Handla när USA-börsen är öppen (15:30-22:00)</li>
+                            <li>Börja med små summor (100-300 kr)</li>
+                            <li>Använd lägre hävstång (X2) tills du lärt dig</li>
+                            <li>Följ din plan och dina Stop Loss-nivåer</li>
+                            <li>Läs på om certifikatet INNAN du köper</li>
+                            <li>Ha tålamod och disciplin</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="warning-box">
+                        <h4>❌ GÖR INTE:</h4>
+                        <ul style="margin-top: 10px; padding-left: 20px;">
+                            <li>Flytta Stop Loss nedåt när det går dåligt</li>
+                            <li>Håll X5+ certifikat över natten</li>
+                            <li>Investera pengar du inte har råd att förlora</li>
+                            <li>Handla på känslor (gir eller rädsla)</li>
+                            <li>Hoppa in utan plan eller strategi</li>
+                            <li>Ignorera varningssignaler</li>
+                            <li>Satsa allt på en position</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="info-box">
+                        <h4>⏰ Bästa tiderna att handla:</h4>
+                        <ul style="margin-top: 10px; padding-left: 20px;">
+                            <li><strong>15:30-16:30:</strong> USA öppnar - hög volatilitet</li>
+                            <li><strong>16:30-21:00:</strong> Lugnare handel</li>
+                            <li><strong>21:00-22:00:</strong> USA stänger - kan bli rörigt</li>
+                            <li><strong>❌ Undvik:</strong> 08:00-15:30 när USA är stängt</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="card" style="margin-top: 30px; background: rgba(0, 212, 170, 0.1);">
+                        <h3>🎓 Lär dig mer:</h3>
+                        <ul style="margin-top: 15px;">
+                            <li><strong>Avanza Akademin:</strong> Gratis kurser om trading</li>
+                            <li><strong>Testa med små summor först</strong> (50-100 kr)</li>
+                            <li><strong>Följ erfarna traders</strong> på forum (men tänk själv!)</li>
+                            <li><strong>Läs om certifikatets faktablad</strong> på Avanza</li>
+                            <li><strong>Förstå urholkningseffekten</strong> vid daglig hävstång</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let selectedRisk = 'balanced';
+        
+        const riskLevels = {
+            low: { stopLoss: 0.10, takeProfit: 0.20, name: 'Försiktig' },
+            balanced: { stopLoss: 0.15, takeProfit: 0.30, name: 'Balanserad' },
+            aggressive: { stopLoss: 0.20, takeProfit: 0.40, name: 'Aggressiv' }
+        };
+        
+        function showTab(tabName) {
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+        
+        function selectRisk(risk) {
+            selectedRisk = risk;
+            document.querySelectorAll('.risk-option').forEach(option => {
+                option.classList.remove('active');
+            });
+            event.currentTarget.classList.add('active');
+        }
+        
+        function calculate() {
+            const certName = document.getElementById('certName').value;
+            const buyPrice = parseFloat(document.getElementById('buyPrice').value);
+            const quantity = parseInt(document.getElementById('quantity').value);
+            const leverage = parseInt(document.getElementById('leverage').value);
+            
+            if (!buyPrice || !quantity) {
+                alert('Fyll i alla fält!');
+                return;
+            }
+            
+            const risk = riskLevels[selectedRisk];
+            const totalInvestment = buyPrice * quantity;
+            
+            // Stop Loss calculations
+            const slTrigger = buyPrice * (1 - risk.stopLoss);
+            const slLimit = slTrigger * 0.98; // 2% under trigger for safety
+            const maxLoss = totalInvestment * risk.stopLoss;
+            
+            // Take Profit calculations
+            const tpLimit = buyPrice * (1 + risk.takeProfit);
+            const maxProfit = totalInvestment * risk.takeProfit;
+            
+            // Risk/Reward Ratio
+            const ratio = (maxProfit / maxLoss).toFixed(2);
+            
+            // Update results
+            document.getElementById('totalInvestment').textContent = totalInvestment.toFixed(2) + ' kr';
+            document.getElementById('riskLevel').textContent = risk.name;
+            
+            document.getElementById('slTrigger').textContent = slTrigger.toFixed(2) + ' kr';
+            document.getElementById('slLimit').textContent = slLimit.toFixed(2) + ' kr';
+            document.getElementById('maxLoss').textContent = '-' + maxLoss.toFixed(2) + ' kr';
+            document.getElementById('lossPercent').textContent = '-' + (risk.stopLoss * 100).toFixed(0) + '%';
+            
+            document.getElementById('tpLimit').textContent = tpLimit.toFixed(2) + ' kr';
+            document.getElementById('maxProfit').textContent = '+' + maxProfit.toFixed(2) + ' kr';
+            document.getElementById('profitPercent').textContent = '+' + (risk.takeProfit * 100).toFixed(0) + '%';
+            
+            document.getElementById('ratio').textContent = '1:' + ratio;
+            
+            // Ratio advice
+            let ratioAdvice = '';
+            if (ratio >= 2) {
+                ratioAdvice = '✅ Utmärkt ratio! Din möjliga vinst är dubbelt så stor som din risk.';
+            } else if (ratio >= 1.5) {
+                ratioAdvice = '👍 Bra ratio! Rimlig balans mellan risk och belöning.';
+            } else {
+                ratioAdvice = '⚠️ Låg ratio. Överväg att justera dina nivåer för bättre risk/reward.';
+            }
+            document.getElementById('ratioAdvice').textContent = ratioAdvice;
+            
+            // Update guide values
+            document.getElementById('slGuideTrigger').textContent = slTrigger.toFixed(2) + ' kr';
+            document.getElementById('slGuideLimit').textContent = slLimit.toFixed(2) + ' kr';
+            document.getElementById('slGuideQuantity').textContent = quantity + ' st';
+            
+            document.getElementById('tpGuideLimit').textContent = tpLimit.toFixed(2) + ' kr';
+            document.getElementById('tpGuideQuantity').textContent = quantity + ' st';
+            
+            // Show results
+            document.getElementById('results').classList.add('show');
+            
+            // Scroll to results
+            document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    </script>
+</body>
+</html>
